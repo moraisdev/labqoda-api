@@ -49,8 +49,6 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        aws-access-key-id: AKIAQTHFWLXNE5VDRA7B
-        aws-secret-access-key: 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
         aws-region: us-east-1
 
     - name: Run deploy script in instance "i-0c268adc2c7d6d91c"
