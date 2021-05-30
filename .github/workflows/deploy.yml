@@ -1,0 +1,72 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  ci:
+    name: Run lint and tests
+    runs-on: ubuntu-latest
+    env:
+      SECRET_KEY: fake-key
+      DEBUG: True
+      SOCIAL_AUTH_FACEBOOK_KEY: fake
+      SOCIAL_AUTH_FACEBOOK_SECRET: fake
+      SOCIAL_AUTH_GOOGLE_OAUTH2_KEY: fake
+      SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET: fake
+      SOCIAL_AUTH_GITHUB_KEY: fake
+      SOCIAL_AUTH_GITHUB_SECRET: fake
+      VDOCHIPER_BASE_URL: fake
+      VDOCHIPER_API_KEY: fake
+      WKHTMLTOPDF_CMD: fake
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8.5
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.8.5
+
+    - name: Install Dependencies
+      run: make ci-dependencies
+
+    - name: Run Lint
+      run: make lint
+
+    - name: Run Test
+      run: make test
+
+  deploy:
+    needs: ci
+    name: Deploy ec2
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: AKIAQTHFWLXNE5VDRA7B
+        aws-secret-access-key: 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
+        aws-region: us-east-1
+
+    - name: Run deploy script in instance "i-0c268adc2c7d6d91c"
+      run: |
+        aws ssm send-command \
+        --instance-ids "i-0c268adc2c7d6d91c" \
+        --document-name "AWS-RunShellScript" \
+        --comment "Run script" \
+        --parameters '{"commands":["sudo runuser -l ec2-user -c \"deploy-labqoda-api\""]}' \
+        --output text
+
+    - name: Run deploy script in instance "i-04912fe4963c057dd"
+      run: |
+        aws ssm send-command \
+        --instance-ids "i-04912fe4963c057dd" \
+        --document-name "AWS-RunShellScript" \
+        --comment "Run script" \
+        --parameters '{"commands":["sudo runuser -l ec2-user -c \"deploy-labqoda-api\""]}' \
+        --output text
